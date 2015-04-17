@@ -1,0 +1,15 @@
+{
+  "name": "front-end-prototype",
+  "version": "0.0.1",
+  "homepage": "https://github.com/chyld/front-end-prototype",
+  "authors": [
+    "Chyld Medford <chyld.medford@gmail.com>"
+  ],
+  "license": "BSD",
+  "dependencies": {
+    "jquery": "~2.1.3",
+    "firebase": "~2.2.4",
+    "moment": "~2.10.2",
+    "bootstrap": "~3.3.4"
+  }
+}
