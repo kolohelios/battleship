@@ -15,6 +15,8 @@ function init(){
   $('#new-player').click(newPlayer);
   players.on('child_added', createPlayer);
   $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
+
+
 }
 
 function createUser(){
@@ -78,4 +80,28 @@ function createPlayer(snapshot){
   var myUid = root.getAuth().uid;
   //var tr =  '<tr class="' + active + '"><td>' + character.handle + '</td><td><img src="' + character.avatar + '"></td></tr>';
   //$('#characters > tbody').append(tr);
+  $('#charactercreation').hide();
+  $('#shipcreation').show();
+}
+
+function createBattleship(){
+  var battleshipType = $('#ship-type');
+  var battleshipName = $('#ship-name');
+
+
+}
+
+function placeBattleship(){
+
+}
+
+function paintBattleship(ship, x, y, orientation){
+
+  var dinghy = ['/assets/dinghy1.png', '/assets/dinghy2.png'];
+
+  for(var i = 0; i < dinghy.length; i++){
+    $('td[data-x="' + x + '"][data-y="' + (y + i) + '"]').append('<img src="/assets/' + ship + i + '.png" height="50" width=50" align="right">').addClass('image').addClass('imagerotate');
+  }
+
+
 }

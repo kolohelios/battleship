@@ -22,7 +22,7 @@ body{
 #pirateship{
   font-size: 12em;
   position: absolute;
-  left: 250px;
+  left: 225px;
   top: -180px;
   width: 150px;
   pointer-events: none;
@@ -54,8 +54,9 @@ body{
 
 #boards{
   table, td, tr{
-    border: 1px rgba(35, 17, 245, 0.5) dashed;
+
     border-radius: 5px;
+
   }
   table{
     margin: 50px;
@@ -66,6 +67,16 @@ body{
   td{
     width: 50px;
     height: 50px;
+    margin: -3px;
+    border: 1px rgba(35, 17, 245, 0.5) dashed;
+  }
+  .image{
+    height: 50px;
+    width: 50px;
+  }
+  .imagerotate{
+    -webkit-transform: rotate(270deg); /* Chrome, Safari, Opera */
+    transform: rotate(270deg);
   }
   #board1, #board2{
     position: absolute;
@@ -80,6 +91,7 @@ body{
     border-color: 1px blue dashed;
   }
   #board2{
-    border-color: 1px blue dashed;
+    display: none;
+    border-color: 1px red dashed;
   }
 }

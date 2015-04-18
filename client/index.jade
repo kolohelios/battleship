@@ -2,15 +2,15 @@ doctype html
 html
   head
     meta(charset='utf-8')
-    title Treasure Battle
+    title Treasure Ship
     link(rel='stylesheet', href='/vendor/font-awesome/css/font-awesome.min.css')
     link(rel='stylesheet', href='/vendor/animate.css/animate.min.css')
     link(rel='stylesheet', href=isProd ? '/index.min.css' : '/index.css')
     link(rel='shortcut icon', href='/favicon.ico')
   body
     #container.col-md-12.col-offset-3
-      h1#title.animated.swing Battleship
-      img#pirateship(src='/assets/pirateship.png')
+      h1#title.animated.swing Treasure Ship
+      img#pirateship.animated.slideInLeft(src='/assets/pirateship.png')
       #controls
         #user
           input#email(type='email', placeholder='email')
@@ -30,6 +30,7 @@ html
             option Man-of-War
             option Collier
             option Dinghy
+          button#create-and-place-ship Create and Place Ship
         p#message
       #boards
         table#board1
