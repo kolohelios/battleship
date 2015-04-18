@@ -3,6 +3,7 @@
 
 body{
   background-color: @blue-color;
+  image-rendering: crisp-edges;
   background-image: url('/assets/map.png');
   background-repeat: no-repeat;
   background-size: cover;
@@ -10,6 +11,7 @@ body{
   width: 100vw;
   height: 100vh;
   font-family: 'Lakki Reddy', cursive;
+  -webkit-font-smoothing: auto;
 }
 
 #title{
@@ -75,8 +77,8 @@ body{
     width: 50px;
   }
   .imagerotate{
-    -webkit-transform: rotate(270deg); /* Chrome, Safari, Opera */
-    transform: rotate(270deg);
+    -webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+    transform: rotate(90deg);
   }
   #board1, #board2{
     position: absolute;
