@@ -16,6 +16,7 @@ function init(){
   $('#create-and-place-ship').click(placeBattleship);
   players.on('child_added', createPlayer);
   battleships.on('child_added', displayShip);
+  battleships.on('child_changed', updateShip);
   $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
   rotateCounter = 0;
@@ -139,12 +140,7 @@ function setPosition(name, shipType, x, y, vertOrientation){
     vertOrientation: vertOrientation,
     uid: myPlayer.uid
   });
-  clearBoard(1);
-}
-
-function clearBoard(board){
-  $('#board' + board)('.image').removeClass('image imagerotate');
-  $('#board' + board + ' .td img').remove();
+  addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
 }
 
 function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, board){
@@ -153,10 +149,10 @@ function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, boa
     images: ['']
     }, {
     name: 'corvette',
-    images: ['']
+    images: ['/assets/corvette0.png', '/assets/corvette1.png', '/assets/corvette2.png', '/assets/corvette3.png']
     }, {
     name: 'man-of-war',
-    images: ['']
+    images: ['/assets/man-of-war0.png', '/assets/man-of-war1.png', '/assets/man-of-war2.png']
     }, {
     name: 'junk',
     images: ['/assets/junk0.png', '/assets/junk1.png', '/assets/junk2.png']
@@ -196,4 +192,8 @@ function displayShip(snapshot){
   if(ship.uid === myPlayer.uid){
     addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
   }
+}
+
+function updateShip(snapshot){
+  
 }
