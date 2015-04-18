@@ -1,7 +1,7 @@
 'use strict';
 /* global Firebase */
 
-var root, players, battleships;
+var root, players, battleships, myKey, myPlayer;
 
 $(document).ready(init);
 
@@ -12,6 +12,9 @@ function init(){
   $('#create-user').click(createUser);
   $('#login-user').click(loginUser);
   $('#logout-user').click(logoutUser);
+  $('#new-player').click(newPlayer);
+  players.on('child_added', createPlayer);
+  $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
 }
 
 function createUser(){
@@ -24,7 +27,7 @@ function createUser(){
     if (error) {
       console.log('Error creating user:', error);
     } else {
-      console.log('Error creating user:', error);
+      console.log('Success creating user:', userData);
     }
   });
 }
@@ -40,11 +43,39 @@ function loginUser(){
     if (error) {
       console.log('Login Failed!', error);
     } else {
-      console.log('Login successful');
+      $('#user').hide();
+      $('#shipcreation').show();
+      $('#message').text('Arrrr, welcome den. Let\'s get ta work. Add yer plundrun\' ships!');
     }
   });
 }
 
 function logoutUser(){
+  console.log('running');
+  root.unauth();
+  myKey = null;
+  $('#characters > tbody > tr.active').removeClass('active');
+}
 
+function newPlayer(){
+  var handle = $('#handle').val();
+  var avatar= $('#avatar').val();
+  var uid = root.getAuth().uid;
+  players.push({
+    handle: handle,
+    avatar: avatar,
+    uid: uid
+  });
+}
+
+function createPlayer(snapshot){
+  console.log('create player');
+  var myPlayer = snapshot.val();
+  var myKey = snapshot.key();
+  var avatar = myPlayer.avatar;
+  var handle = myPlayer.handle;
+  var uid = myPlayer.uid;
+  var myUid = root.getAuth().uid;
+  //var tr =  '<tr class="' + active + '"><td>' + character.handle + '</td><td><img src="' + character.avatar + '"></td></tr>';
+  //$('#characters > tbody').append(tr);
 }
