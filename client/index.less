@@ -1,19 +1,46 @@
 body{
-  color: hsla(52, 100%, 20%, 1.0);
-  background-color: #FFDC00;
+  background-color: #5e5c53;
+  background-image: url('/assets/map.png');
+  width: 100vw;
+  margin: auto;
+  text-align: center;
 }
 
-#apollo{
-  border: 5px solid hsla(52, 100%, 20%, 1.0);
-  width: 150px;
-  height: 225px;
+#container{
+  margin: 0 auto;
+  width: 100%;
 }
 
-#title{
-  position: relative;
-  top: -170px;
-  left: 200px;
-  font-family: monospace;
-  letter-spacing: 10px;
-  font-size: 40px;
+#boards{
+  display: inline;
+
+  table, td, tr{
+  }
+  table{
+    display: inline-block;
+    margin: 25px;
+  }
+  td{
+    width: 40px;
+    height: 40px;
+  }
+  #board1{
+    table, td, tr{
+      border: 1px rgba(35, 17, 245, 0.5) dashed;
+    }
+    background-image: url('/assets/waves.gif');
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0.5;
+  }
+  #board2{
+    table, td, tr{
+      border: 1px rgba(250, 50, 14, 0.59) dashed;
+    }
+    background-image: url('/assets/radar.gif'), url('/assets/waves.gif');
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0.5;
+  }
+
 }
