@@ -1,7 +1,7 @@
 'use strict';
 /* global Firebase */
 
-var root, players, battleships, myKey, myPlayer, lastPaint, rotateCounter;
+var root, players, battleships, myKey, myPlayer, lastPaint, rotateCounter, vertOrientation;
 
 $(document).ready(init);
 
@@ -15,9 +15,11 @@ function init(){
   $('#new-player').click(newPlayer);
   $('#create-and-place-ship').click(placeBattleship);
   players.on('child_added', createPlayer);
+  battleships.on('child_added', displayShip);
   $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
   rotateCounter = 0;
+  vertOrientation = 0;
 }
 
 function createUser(){
@@ -27,7 +29,10 @@ function createUser(){
     email : email,
     password : password
   }, function(error, userData) {
-    if (error) {
+    if (error.code === 'EMAIL_TAKEN'){
+        $('#message').text('It looks like ya ben around these parts bifore. Login instead.')
+      }
+      else if(error){
       console.log('Error creating user:', error);
     } else {
       console.log('Success creating user:', userData);
@@ -54,7 +59,6 @@ function loginUser(){
 }
 
 function logoutUser(){
-  console.log('running');
   root.unauth();
   myKey = null;
   $('#characters > tbody > tr.active').removeClass('active');
@@ -73,8 +77,8 @@ function newPlayer(){
 
 function createPlayer(snapshot){
   console.log('create player');
-  var myPlayer = snapshot.val();
-  var myKey = snapshot.key();
+  myPlayer = snapshot.val();
+  myKey = snapshot.key();
   var avatar = myPlayer.avatar;
   var handle = myPlayer.handle;
   var uid = myPlayer.uid;
@@ -85,58 +89,80 @@ function createPlayer(snapshot){
   $('#shipcreation').show();
 }
 
-// function createBattleship(){
-//   var battleshipType = $('#ship-type');
-//   var battleshipName = $('#ship-name');
-//
-//
-// }
-
 function placeBattleship(){
-  var battleshipType = $('#ship-type').val();
-  console.log(battleshipType);
+  $('#message').text('Click a location to place your ship, click again to rotate.');
   $('#board1 td').on('click', tempPosition);
 }
 
-function tempPosition(event){
-  $('#set-position').on('click', function(){
-    setPosition();
-  });
-
-  var vertOrientation;
-
+function tempPosition(){
+  var shipType = $('#ship-type').val();
   var x = $(this).data('x');
   var y = $(this).data('y');
 
   console.log(rotateCounter);
   if(x === lastPaint.x && y === lastPaint.y){
     if(rotateCounter === 1){
-      addOrRemoveBattleship('rem', 'dinghy', lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
+      addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
+      //vertOrientation = (vertOrientation === undefined) ? 0 : vertOrientation;
       vertOrientation = Math.abs(vertOrientation - 1);
-      addOrRemoveBattleship('add', 'dinghy', x, y, vertOrientation, 1);
+      addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
       rotateCounter = 2;
+      lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
     } else if(rotateCounter === 2) {
-      addOrRemoveBattleship('rem', 'dinghy', x, y, vertOrientation, 1);
+      addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
       rotateCounter = 0;
+      lastPaint = {x: -1, y: -1, vertOrientation: 0};
     }
   } else {
-    vertOrientation = 0;
-    addOrRemoveBattleship('rem', 'dinghy', lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
-    addOrRemoveBattleship('add', 'dinghy', x, y, vertOrientation, 1);
+    //vertOrientation = 0;
+    addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
+    addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
     rotateCounter = 1;
+    lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
   }
-  lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
+
   console.log(lastPaint);
+  $('#set-position').on('click', function(){
+    name = $('#ship-name').val();
+    console.log(name, shipType, x, y, vertOrientation);
+    setPosition(name, shipType, x, y, vertOrientation);
+  });
 }
 
-function setPosition(){
+function setPosition(name, shipType, x, y, vertOrientation){
+  console.log('set position');
+  battleships.push({
+    name: name,
+    shipType: shipType,
+    x: x,
+    y: y,
+    vertOrientation: vertOrientation,
+    uid: myPlayer.uid
+  });
+  clearBoard(1);
+}
 
+function clearBoard(board){
+  $('#board' + board)('.image').removeClass('image imagerotate');
+  $('#board' + board + ' .td img').remove();
 }
 
 function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, board){
-  var ships = [
-    { name: 'dinghy',
-      images: ['/assets/dinghy0.png', '/assets/dinghy1.png']
+  var ships = [{
+    name: 'frigate',
+    images: ['']
+    }, {
+    name: 'corvette',
+    images: ['']
+    }, {
+    name: 'man-of-war',
+    images: ['']
+    }, {
+    name: 'junk',
+    images: ['/assets/junk0.png', '/assets/junk1.png', '/assets/junk2.png']
+    }, {
+    name: 'dinghy',
+    images: ['/assets/dinghy0.png', '/assets/dinghy1.png']
     }
   ];
   var arridx;
@@ -155,6 +181,19 @@ function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, boa
     else{
       $loc.removeClass('image' + rotateImage).find('img').remove();
     }
-    (vertOrientation === 0) ? x++ : y++;
+    if (vertOrientation === 0){
+      x++;
+    } else {
+      y++;
+    }
+  }
+}
+
+function displayShip(snapshot){
+  var ship = snapshot.val();
+  console.log(ship);
+
+  if(ship.uid === myPlayer.uid){
+    addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
   }
 }

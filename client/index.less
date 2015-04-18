@@ -3,7 +3,6 @@
 
 body{
   background-color: @blue-color;
-  image-rendering: crisp-edges;
   background-image: url('/assets/map.png');
   background-repeat: no-repeat;
   background-size: cover;
@@ -78,6 +77,8 @@ body{
   }
   .imagerotate{
     -webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+    -webkit-backface-visibility: hidden;
+    outline: 1px solid transparent;
     transform: rotate(90deg);
   }
   #board1, #board2{
