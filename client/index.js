@@ -2,7 +2,7 @@
 /* global Firebase */
 
 var root, players, battleships, games; // Firebase & children
-var myKey, myPlayer; // Firebase objects and keys
+var myKey, myPlayer, myGameKey; // Firebase objects and keys
 var lastPaint, rotateCounter, vertOrientation, shipType, x, y; // general globals
 
 var ships = [{
@@ -37,10 +37,10 @@ function init(){
   $('#create-and-place-ship').click(placeBattleship);
   $('#set-position').click(setPosition);
   players.on('child_added', createPlayer);
+  games.on('child_added', createGame);
   battleships.on('child_added', displayShip);
   battleships.on('child_changed', updateShip);
-  games.on('child_added', createGame);
-  $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
+  switchGameMode('login');
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
   rotateCounter = 0;
   vertOrientation = 0;
@@ -75,9 +75,7 @@ function loginUser(){
     if (error) {
       console.log('Login Failed!', error);
     } else {
-      $('#user').hide();
-      $('#charactercreation').show();
-      $('#message').text('Arrrr, welcome den. Let\'s get ta work. Add yer plundrun\' ships!');
+      switchGameMode('loggedin');
     }
   });
 }
@@ -108,15 +106,10 @@ function createPlayer(snapshot){
   if(root.getAuth().uid === player.uid){
     myPlayer = snapshot.val();
     myKey = snapshot.key();
-    var avatar = myPlayer.avatar;
     var handle = myPlayer.handle;
     var uid = myPlayer.uid;
     var myUid = root.getAuth().uid;
-    $('#user').hide();
-    console.log(handle);
-    $('#player1').text(handle);
-    $('#charactercreation').hide();
-    $('#shipcreation').show();
+    switchGameMode('createplayer');
   }
 }
 
@@ -180,7 +173,6 @@ function setPosition(){
 }
 
 function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, board){
-  //console.log(addOrRemove, shipType, x, y, vertOrientation, board);
   var arridx;
   ships.forEach(function(ship, i){
     if(ship.name === shipType){
@@ -226,12 +218,14 @@ function getShipCoords(shipType, checkX, checkY){
 function displayShip(snapshot){
   var ship = snapshot.val();
 
+  console.log('ship uid: ', ship.uid, 'myplayer uid: ', myPlayer.uid);
+
   if(ship.uid === myPlayer.uid){
     addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
     $('#ship-type option[value="' + ship.shipType + '"]').remove();
   }
-  if($('#ship-type').find('option').length === 0){
-    games.push({ player: [myPlayer.uid] });
+  if((myGameKey === undefined) && ($('#ship-type').find('option').length < 1)){
+      games.push({ players: [myPlayer.uid] });
   }
 }
 
@@ -240,14 +234,27 @@ function updateShip(snapshot){
 }
 
 function createGame(snapshot){
-  var gameKey = snapshot.key();
-  players.child(myKey).update({
-    activeGame: gameKey
-  });
-  $('#message').text('Waiting for another pirate to scrum with!');
-  $('#shipcreation').hide();
-  $('#board1').hide();
-  $('#board2').show();
+  var game = snapshot.val();
+
+  console.log(game.players.length);
+  console.log(myKey);
+
+  if(game.players.indexOf(root.getAuth().uid) > -1){
+    myGameKey = snapshot.key();
+    players.child(myKey).update({
+      activeGame: myGameKey
+    });
+    switchGameMode('startgame');
+  } else if(game.players.length < 2){
+      myGameKey = snapshot.key();
+      players.child(myKey).update({
+        activeGame: myGameKey
+      });
+      game.child(myGameKey).push({
+        players: [myPlayer.uid]
+      });
+    switchGameMode('startgame');
+    }
 }
 
 function isShipPresent(x, y, board){
@@ -257,5 +264,36 @@ function isShipPresent(x, y, board){
   }
   else{
     return false;
+  }
+}
+
+function switchGameMode(gameMode){
+  switch (gameMode){
+    case 'login':
+      $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
+      break;
+    case 'loggedin':
+      $('#user').hide();
+      $('#charactercreation').show();
+      $('#message').text('Arrrr, welcome den. Let\'s get ta work. Add yer plundrun\' ships!');
+    case 'logout':
+      $('#user').show();
+      $('#board1').hide();
+      $('#board2').hide();
+      break;
+    case 'createplayer':
+      $('#user').hide();
+      $('#player1').text(handle);
+      $('#charactercreation').hide();
+      $('#shipcreation').show();
+      break;
+    case 'createboard':
+      // create board here
+      break;
+    case 'startgame':
+      $('#message').text('Waiting for another pirate to scrum with!');
+      $('#shipcreation').hide();
+      $('#board1').hide();
+      $('#board2').show();
   }
 }
