@@ -62,7 +62,6 @@ function loginUser(){
 function logoutUser(){
   root.unauth();
   myKey = null;
-  $('#characters > tbody > tr.active').removeClass('active');
 }
 
 function newPlayer(){
@@ -77,7 +76,6 @@ function newPlayer(){
 }
 
 function createPlayer(snapshot){
-  console.log('create player');
   myPlayer = snapshot.val();
   myKey = snapshot.key();
   var avatar = myPlayer.avatar;
@@ -93,6 +91,7 @@ function createPlayer(snapshot){
 function placeBattleship(){
   $('#message').text('Click a location to place your ship, click again to rotate.');
   $('#board1 td').on('click', tempPosition);
+  $('#create-and-place-ship').hide();
 }
 
 function tempPosition(){
@@ -100,7 +99,6 @@ function tempPosition(){
   var x = $(this).data('x');
   var y = $(this).data('y');
 
-  console.log(rotateCounter);
   if(x === lastPaint.x && y === lastPaint.y){
     if(rotateCounter === 1){
       addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
@@ -122,16 +120,16 @@ function tempPosition(){
     lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
   }
 
-  console.log(lastPaint);
   $('#set-position').on('click', function(){
     name = $('#ship-name').val();
-    console.log(name, shipType, x, y, vertOrientation);
     setPosition(name, shipType, x, y, vertOrientation);
+    $('#board1 td').off('click', tempPosition);
+    addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
+    $('#create-and-place-ship').show();
   });
 }
 
 function setPosition(name, shipType, x, y, vertOrientation){
-  console.log('set position');
   battleships.push({
     name: name,
     shipType: shipType,
@@ -140,13 +138,13 @@ function setPosition(name, shipType, x, y, vertOrientation){
     vertOrientation: vertOrientation,
     uid: myPlayer.uid
   });
-  addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
 }
 
 function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, board){
+  console.log(addOrRemove, shipType, x, y, vertOrientation, board);
   var ships = [{
     name: 'frigate',
-    images: ['']
+    images: ['/assets/frigate0.png', '/assets/frigate1.png', '/assets/frigate2.png', '/assets/frigate3.png', '/assets/frigate4.png']
     }, {
     name: 'corvette',
     images: ['/assets/corvette0.png', '/assets/corvette1.png', '/assets/corvette2.png', '/assets/corvette3.png']
@@ -170,7 +168,6 @@ function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, boa
   var rotateImage = (vertOrientation === 0) ? '' : ' imagerotate';
   for(var i = 0; i < ships[arridx].images.length; i++){
     var $loc = $('#board' + board + ' td[data-x="' + x + '"][data-y="' + y + '"]');
-    console.log(ships[arridx].images[i]);
     if(addOrRemove === 'add'){
       $loc.append('<img src="' + ships[arridx].images[i] + '" height="50" width=50" align="right">').addClass('image' + rotateImage);
     }
@@ -187,13 +184,14 @@ function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, boa
 
 function displayShip(snapshot){
   var ship = snapshot.val();
-  console.log(ship);
 
   if(ship.uid === myPlayer.uid){
+    console.log('print ship');
+    console.log('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
     addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
   }
 }
 
 function updateShip(snapshot){
-  
+
 }
