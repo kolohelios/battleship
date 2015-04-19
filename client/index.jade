@@ -33,8 +33,10 @@ html
           button#set-position Set Position
         p#message
         #players
-          p#player1.player Player 1
-          p#player2.player Player 2
+          label Turn: 
+          p#p1.player Player 1
+          p#p2.player Player 2
+          button#switch-boards Switch Boards
       #boards
         table#board1
           - for(var i = 0; i < 10; i++)
