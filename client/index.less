@@ -49,11 +49,15 @@ body{
     margin-top: 15px;
     font-size: 20px;
   }
-  #shipcreation, #set-position, #resign, #charactercreation{
+  #shipcreation, #set-position, #charactercreation{
     display: none;
   }
-  textarea{
-    resize: none;
+  #players{
+    display: inline;
+  }
+  .player{
+    display: inline-block;
+    margin: 25px;
   }
 }
 
@@ -73,11 +77,11 @@ body{
     margin: -3px;
     border: 1px rgba(35, 17, 245, 0.5) dashed;
   }
-  .image{
+  .ship{
     height: 50px;
     width: 50px;
   }
-  .imagerotate{
+  .shiprotate{
     -webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
     -webkit-backface-visibility: hidden;
     outline: 1px solid transparent;
