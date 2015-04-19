@@ -7,6 +7,7 @@ body{
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+  text-align: center;
   width: 100vw;
   height: 100vh;
   font-family: 'Lakki Reddy', cursive;
@@ -48,16 +49,17 @@ body{
     margin-top: 15px;
     font-size: 20px;
   }
-  #shipcreation{
+  #shipcreation, #set-position, #resign, #charactercreation{
     display: none;
+  }
+  textarea{
+    resize: none;
   }
 }
 
 #boards{
   table, td, tr{
-
     border-radius: 5px;
-
   }
   table{
     margin: 50px;
@@ -83,14 +85,16 @@ body{
   }
   #board1, #board2{
     position: absolute;
+    background-color: rgba(94, 84, 84, 0.25);
     left: 25%;
     background-image: url('/assets/waves.gif');
     background-size: cover;
     background-repeat: no-repeat;
     margin: 0 auto;
-    background-color: rgba(94, 84, 84, 0.65);
+
   }
   #board1{
+    display: none;
     border-color: 1px blue dashed;
   }
   #board2{

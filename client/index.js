@@ -1,7 +1,9 @@
 'use strict';
 /* global Firebase */
 
-var root, players, battleships, myKey, myPlayer, lastPaint, rotateCounter, vertOrientation;
+var root, players, battleships, games; // Firebase children
+var myKey, myPlayer, myGame, myGameKey; // Firebase objects and keys
+var lastPaint, rotateCounter, vertOrientation, shipType, x, y; // general globals
 
 $(document).ready(init);
 
@@ -9,14 +11,20 @@ function init(){
   root = new Firebase('https://battleshp-kolohelios.firebaseio.com/');
   players = root.child('players');
   battleships = root.child('battleships');
+  games = root.child('games');
   $('#create-user').click(createUser);
   $('#login-user').click(loginUser);
   $('#logout-user').click(logoutUser);
   $('#new-player').click(newPlayer);
   $('#create-and-place-ship').click(placeBattleship);
+  $('#set-position').click(setPosition);
+  $('#new-game').click(newGame);
+  $('#load-game').click(loadGame);
+  $('#resign').click(resignGame);
   players.on('child_added', createPlayer);
   battleships.on('child_added', displayShip);
   battleships.on('child_changed', updateShip);
+  games.on('child_added', listGames);
   $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
   rotateCounter = 0;
@@ -31,7 +39,7 @@ function createUser(){
     password : password
   }, function(error, userData) {
     if (error.code === 'EMAIL_TAKEN'){
-        $('#message').text('It looks like ya ben around these parts bifore. Login instead.')
+        $('#message').text('It looks like ya ben around these parts bifore. Login instead.');
       }
       else if(error){
       console.log('Error creating user:', error);
@@ -57,11 +65,13 @@ function loginUser(){
       $('#message').text('Arrrr, welcome den. Let\'s get ta work. Add yer plundrun\' ships!');
     }
   });
+  //$('charactercreation').show();
 }
 
 function logoutUser(){
   root.unauth();
   myKey = null;
+  $('#user').show();
 }
 
 function newPlayer(){
@@ -84,64 +94,79 @@ function createPlayer(snapshot){
   var myUid = root.getAuth().uid;
   //var tr =  '<tr class="' + active + '"><td>' + character.handle + '</td><td><img src="' + character.avatar + '"></td></tr>';
   //$('#characters > tbody').append(tr);
+  $('#user').hide();
   $('#charactercreation').hide();
   $('#shipcreation').show();
 }
 
 function placeBattleship(){
   $('#message').text('Click a location to place your ship, click again to rotate.');
+
+  console.log(shipType);
   $('#board1 td').on('click', tempPosition);
   $('#create-and-place-ship').hide();
+  $('#set-position').show();
 }
 
 function tempPosition(){
-  var shipType = $('#ship-type').val();
-  var x = $(this).data('x');
-  var y = $(this).data('y');
+  shipType = $('#ship-type').val();
+  console.log('running tempposition, rotateCounter:', rotateCounter);
 
-  if(x === lastPaint.x && y === lastPaint.y){
-    if(rotateCounter === 1){
-      addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
-      //vertOrientation = (vertOrientation === undefined) ? 0 : vertOrientation;
-      vertOrientation = Math.abs(vertOrientation - 1);
-      addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
-      rotateCounter = 2;
-      lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
-    } else if(rotateCounter === 2) {
-      addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
-      rotateCounter = 0;
-      lastPaint = {x: -1, y: -1, vertOrientation: 0};
-    }
-  } else {
-    //vertOrientation = 0;
-    addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
+  x = $(this).data('x');
+  y = $(this).data('y');
+
+  if(rotateCounter === 0){
+    //addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
     addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
     rotateCounter = 1;
     lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
   }
-
-  $('#set-position').on('click', function(){
-    name = $('#ship-name').val();
-    setPosition(name, shipType, x, y, vertOrientation);
-    $('#board1 td').off('click', tempPosition);
+  else if(rotateCounter === 1){
+    addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
+    vertOrientation = Math.abs(vertOrientation - 1);
+    addOrRemoveBattleship('add', shipType, lastPaint.x, lastPaint.y, vertOrientation, 1);
+    rotateCounter = 2;
+    //lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
+  } else if(rotateCounter === 2) {
     addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
-    $('#create-and-place-ship').show();
-  });
+    rotateCounter = 0;
+    vertOrientation = 0;
+    //lastPaint = {x: -1, y: -1};
+  }
+// } else {
+//   addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
+//   addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
+//   rotateCounter = 1;
+//   lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
+// }
 }
 
-function setPosition(name, shipType, x, y, vertOrientation){
-  battleships.push({
-    name: name,
+function setPosition(){
+  var name = $('#ship-name').val();
+  $('#ship-type').find('option:selected').remove();
+  addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
+  $('#create-and-place-ship').show();
+  $('#set-position').hide();
+  $('#board1 td').off('click', tempPosition);
+  rotateCounter = 0;
+  vertOrientation = 0;
+  var battleship = {
     shipType: shipType,
     x: x,
     y: y,
     vertOrientation: vertOrientation,
     uid: myPlayer.uid
-  });
+  };
+  battleships.push(battleship);
+  if($('#ship-type').find('option').length === 0){
+    games.push({
+      players: [myPlayer.uid]
+    });
+  }
 }
 
 function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, board){
-  console.log(addOrRemove, shipType, x, y, vertOrientation, board);
+  //console.log(addOrRemove, shipType, x, y, vertOrientation, board);
   var ships = [{
     name: 'frigate',
     images: ['/assets/frigate0.png', '/assets/frigate1.png', '/assets/frigate2.png', '/assets/frigate3.png', '/assets/frigate4.png']
@@ -184,14 +209,70 @@ function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, boa
 
 function displayShip(snapshot){
   var ship = snapshot.val();
+  //console.log(ship);
 
   if(ship.uid === myPlayer.uid){
-    console.log('print ship');
-    console.log('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
     addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
   }
 }
 
 function updateShip(snapshot){
 
+}
+
+function createGame(snapshot){
+  var game = snapshot.val();
+  if(game.players.indexOf(myPlayer.uid) > -1){
+
+    var myGame = snapshot.val();
+    var myGameKey = snapshot.key();
+    console.log(myGame);
+    console.log(myGameKey);
+
+    console.log(snapshot.val());
+    players.child(myKey).update({
+      activeGame: myGameKey
+    });
+    $('#ship-type').hide();
+    $('#create-and-place-ship').hide();
+    $('#message').text('Waiting for another pirate to scrum with!');
+    $('#resign').show();
+  }
+}
+
+function resignGame(){
+  games.child(myGameKey).remove();
+}
+
+function listGames(snapshot){
+  var game = snapshot.val();
+  var gameKey = snapshot.key();
+  console.log(game);
+  if(game.players.indexOf(root.getAuth().uid) > -1){
+
+    //var myGame = snapshot.val();
+    //var myGameKey = snapshot.key();
+    //console.log(myGame);
+    //console.log(myGameKey);
+
+    //console.log(snapshot.val());
+    // players.child(myKey).update({
+    //   activeGame: myGameKey
+    // });
+    $('#game-list').append('<option>' + gameKey + '  ' + game.players[0] + ' vs. ' + game.players[1] + '</option>');
+    // $('#ship-type').hide();
+    // $('#create-and-place-ship').hide();
+    // $('#message').text('Waiting for another pirate to scrum with!');
+    // $('#resign').show();
+  }
+}
+
+function newGame(){
+  games.push({
+    players: [root.getAuth().uid]
+  });
+}
+
+function loadGame(){
+  myGameKey = $('#game-list').find('option:selected').val();
 }

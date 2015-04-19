@@ -17,14 +17,14 @@ html
           input#password(type='password', placeholder='password')
           button#create-user Create Account
           button#login-user Login
-          button#logout-user Logout
+        button#logout-user Logout
         #charactercreation
           input#handle(type='text', placeholder='handle')
           input#avatar(type='url', placeholder='avatar')
           button#new-player Create Player
         #shipcreation
-          label Ship name:
-          input#ship-name(type='text')
+          //label Ship name:
+          //input#ship-name(type='text')
           select#ship-type
             option frigate
             option corvette
@@ -34,6 +34,11 @@ html
           button#create-and-place-ship Create and Place Ship
           button#set-position Set Position
         p#message
+        #gamecontrol
+          button#resign Resign
+          select#game-list
+          button#new-game New Game
+          button#load-game Play Game
       #boards
         table#board1
           - for(var i = 0; i < 10; i++)
