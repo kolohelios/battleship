@@ -23,22 +23,15 @@ html
           input#avatar(type='url', placeholder='avatar')
           button#new-player Create Player
         #shipcreation
-          //label Ship name:
-          //input#ship-name(type='text')
           select#ship-type
-            option frigate
-            option corvette
-            option man-of-war
-            option junk
-            option dinghy
+            option(value='frigate') frigate
+            option(value='corvette') corvette
+            option(value='man-of-war') man-of-war
+            option(value='junk') junk
+            option(value='dinghy') dinghy
           button#create-and-place-ship Create and Place Ship
           button#set-position Set Position
         p#message
-        #gamecontrol
-          button#resign Resign
-          select#game-list
-          button#new-game New Game
-          button#load-game Play Game
       #boards
         table#board1
           - for(var i = 0; i < 10; i++)

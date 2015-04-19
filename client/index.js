@@ -2,7 +2,7 @@
 /* global Firebase */
 
 var root, players, battleships, games; // Firebase children
-var myKey, myPlayer, myGame, myGameKey; // Firebase objects and keys
+var myKey, myPlayer; // Firebase objects and keys
 var lastPaint, rotateCounter, vertOrientation, shipType, x, y; // general globals
 
 $(document).ready(init);
@@ -11,20 +11,15 @@ function init(){
   root = new Firebase('https://battleshp-kolohelios.firebaseio.com/');
   players = root.child('players');
   battleships = root.child('battleships');
-  games = root.child('games');
   $('#create-user').click(createUser);
   $('#login-user').click(loginUser);
   $('#logout-user').click(logoutUser);
   $('#new-player').click(newPlayer);
   $('#create-and-place-ship').click(placeBattleship);
   $('#set-position').click(setPosition);
-  $('#new-game').click(newGame);
-  $('#load-game').click(loadGame);
-  $('#resign').click(resignGame);
   players.on('child_added', createPlayer);
   battleships.on('child_added', displayShip);
   battleships.on('child_changed', updateShip);
-  games.on('child_added', listGames);
   $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
   rotateCounter = 0;
@@ -61,11 +56,11 @@ function loginUser(){
       console.log('Login Failed!', error);
     } else {
       $('#user').hide();
-      $('#shipcreation').show();
+      $('#charactercreation').show();
       $('#message').text('Arrrr, welcome den. Let\'s get ta work. Add yer plundrun\' ships!');
     }
   });
-  //$('charactercreation').show();
+
 }
 
 function logoutUser(){
@@ -92,8 +87,6 @@ function createPlayer(snapshot){
   var handle = myPlayer.handle;
   var uid = myPlayer.uid;
   var myUid = root.getAuth().uid;
-  //var tr =  '<tr class="' + active + '"><td>' + character.handle + '</td><td><img src="' + character.avatar + '"></td></tr>';
-  //$('#characters > tbody').append(tr);
   $('#user').hide();
   $('#charactercreation').hide();
   $('#shipcreation').show();
@@ -116,7 +109,6 @@ function tempPosition(){
   y = $(this).data('y');
 
   if(rotateCounter === 0){
-    //addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
     addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
     rotateCounter = 1;
     lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
@@ -126,24 +118,15 @@ function tempPosition(){
     vertOrientation = Math.abs(vertOrientation - 1);
     addOrRemoveBattleship('add', shipType, lastPaint.x, lastPaint.y, vertOrientation, 1);
     rotateCounter = 2;
-    //lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
   } else if(rotateCounter === 2) {
     addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
     rotateCounter = 0;
     vertOrientation = 0;
-    //lastPaint = {x: -1, y: -1};
   }
-// } else {
-//   addOrRemoveBattleship('rem', shipType, lastPaint.x, lastPaint.y, lastPaint.vertOrientation, 1);
-//   addOrRemoveBattleship('add', shipType, x, y, vertOrientation, 1);
-//   rotateCounter = 1;
-//   lastPaint = {x: x, y: y, vertOrientation: vertOrientation};
-// }
 }
 
 function setPosition(){
   var name = $('#ship-name').val();
-  $('#ship-type').find('option:selected').remove();
   addOrRemoveBattleship('rem', shipType, x, y, vertOrientation, 1);
   $('#create-and-place-ship').show();
   $('#set-position').hide();
@@ -158,11 +141,6 @@ function setPosition(){
     uid: myPlayer.uid
   };
   battleships.push(battleship);
-  if($('#ship-type').find('option').length === 0){
-    games.push({
-      players: [myPlayer.uid]
-    });
-  }
 }
 
 function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, board){
@@ -209,10 +187,15 @@ function addOrRemoveBattleship(addOrRemove, shipType, x, y, vertOrientation, boa
 
 function displayShip(snapshot){
   var ship = snapshot.val();
-  //console.log(ship);
+
 
   if(ship.uid === myPlayer.uid){
     addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
+    $('#ship-type option[value="' + ship.shipType + '"]').remove();
+  }
+  if($('#ship-type').find('option').length === 0){
+    $('#message').text('Waiting for another pirate to scrum with!');
+    $('#shipcreation').hide();
   }
 }
 
@@ -235,44 +218,7 @@ function createGame(snapshot){
     });
     $('#ship-type').hide();
     $('#create-and-place-ship').hide();
-    $('#message').text('Waiting for another pirate to scrum with!');
+
     $('#resign').show();
   }
-}
-
-function resignGame(){
-  games.child(myGameKey).remove();
-}
-
-function listGames(snapshot){
-  var game = snapshot.val();
-  var gameKey = snapshot.key();
-  console.log(game);
-  if(game.players.indexOf(root.getAuth().uid) > -1){
-
-    //var myGame = snapshot.val();
-    //var myGameKey = snapshot.key();
-    //console.log(myGame);
-    //console.log(myGameKey);
-
-    //console.log(snapshot.val());
-    // players.child(myKey).update({
-    //   activeGame: myGameKey
-    // });
-    $('#game-list').append('<option>' + gameKey + '  ' + game.players[0] + ' vs. ' + game.players[1] + '</option>');
-    // $('#ship-type').hide();
-    // $('#create-and-place-ship').hide();
-    // $('#message').text('Waiting for another pirate to scrum with!');
-    // $('#resign').show();
-  }
-}
-
-function newGame(){
-  games.push({
-    players: [root.getAuth().uid]
-  });
-}
-
-function loadGame(){
-  myGameKey = $('#game-list').find('option:selected').val();
 }
