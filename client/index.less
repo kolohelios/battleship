@@ -9,7 +9,6 @@ body{
   background-position: center;
   text-align: center;
   width: 100vw;
-  height: 100vh;
   font-family: 'Lakki Reddy', cursive;
   -webkit-font-smoothing: auto;
 }
@@ -33,10 +32,7 @@ body{
   text-shadow: 2px 2px #666666;
 }
 #container{
-  margin: 0 auto 25px;
-  width: 100%;
-  display: inline;
-  position: relative;
+  margin-bottom: 100px;
 }
 #controls{
   text-align: center;
@@ -69,7 +65,7 @@ body{
     border-radius: 5px;
   }
   table{
-    margin: 50px;
+    margin: 0 auto;
   }
   tr{
     width: 100%;
@@ -92,15 +88,13 @@ body{
     transform: rotate(90deg);
   }
   #board1, #board2{
-    position: absolute;
     background-color: rgba(94, 84, 84, 0.25);
-    left: 25%;
     background-image: url('/assets/waves.gif');
     background-size: cover;
     background-repeat: no-repeat;
-    margin: 0 auto;
   }
   #board1{
+    display: none;
     border-color: 1px blue dashed;
   }
   #board2{

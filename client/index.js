@@ -4,6 +4,7 @@
 var root, players, battleships, games, strikes; // Firebase & children
 var myKey, myPlayer, myGame, myGameKey, playerNum; // Firebase objects and keys
 var lastPaint, rotateCounter, vertOrientation, shipType, x, y; // general globals
+var $sound;
 
 var ships = [{
   name: 'frigate',
@@ -22,6 +23,8 @@ var ships = [{
   images: ['/assets/dinghy0.png', '/assets/dinghy1.png']
   }
 ];
+
+var cannonSnd = '/assets/cannon.wav';
 
 $(document).ready(init);
 
@@ -46,6 +49,7 @@ function init(){
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
   rotateCounter = 0;
   vertOrientation = 0;
+  $sound = $('#sound');
 }
 
 function createUser(){
@@ -332,6 +336,8 @@ function switchGameMode(gameMode){
       strikes = games.child(myGameKey).child('strikes');
       strikes.on('child_added', paintStrikes);
       strikes.on('child_changed', paintStrikes);
+    case 'gameinprogress':
+      $('#message').text('Yar be playin\' now.');
   }
 }
 
@@ -386,6 +392,8 @@ function strike(){
       });
     }
 
+    playSound(cannonSnd);
+
     strikes.push({
       p: playerNum, x: strikeX, y: strikeY, hitOrMiss: ''
     });
@@ -432,4 +440,9 @@ function updateGame(snapshot){
   myGame = snapshot.val();
   displayActivePlayer();
 
+}
+
+function playSound(sound){
+  $sound.attr('src', sound);
+  $sound[0].play();
 }
