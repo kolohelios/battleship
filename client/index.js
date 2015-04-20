@@ -95,6 +95,7 @@ function logoutUser(){
   root.unauth();
   myKey = null;
   switchGameMode('logout');
+  location.reload();
 }
 
 function newPlayer(){
@@ -233,7 +234,9 @@ function displayShip(snapshot){
   if((myGameKey === undefined) && ($('#ship-type').find('option').length < 1)){
     games.push({
       p1: myPlayer.uid,
+      p1handle: myPlayer.handle,
       p2: '',
+      p2handle: '',
       strikes: [],
       p1points: 0,
       p2points: 0,
@@ -264,7 +267,8 @@ function createGame(snapshot){
         activeGame: myGameKey
       });
       games.child(myGameKey).update({
-        p2: myPlayer.uid
+        p2: myPlayer.uid,
+        p2handle: myPlayer.handle
       });
       if($('#ship-type').find('option').length < 1){
         switchGameMode('startgame');
@@ -327,8 +331,8 @@ function switchGameMode(gameMode){
       $('#message').text('Waiting for another pirate to scrum with!');
       $('#board1 td').off('click', tempPosition);
       $('#shipcreation').hide();
-      $('#p1').text(myPlayer.handle);
-      $('#p2').text(myGame.p2);
+      $('#p1').text(myGame.p1handle);
+      $('#p2').text(myGame.p2handle);
       displayActivePlayer();
       strikes = games.child(myGameKey).child('strikes');
       strikes.on('child_added', paintStrikes);
@@ -386,25 +390,27 @@ function displayActivePlayer(){
 }
 
 function strike(){
-    console.log($(this));
-    var strikeX = $(this).data('x');
-    var strikeY = $(this).data('y');
+    if(myGame.turn ===  playerNum){
+      console.log($(this));
+      var strikeX = $(this).data('x');
+      var strikeY = $(this).data('y');
 
-    playSound(cannonSnd);
+      playSound(cannonSnd);
 
-    if(myGame.turn === 'p1'){
-      games.child(myGameKey).update({
-        turn: 'p2'
-      });
-    } else {
-      games.child(myGameKey).update({
-        turn: 'p1'
+      if(myGame.turn === 'p1'){
+        games.child(myGameKey).update({
+          turn: 'p2'
+        });
+      } else {
+        games.child(myGameKey).update({
+          turn: 'p1'
+        });
+      }
+
+      strikes.push({
+        p: playerNum, x: strikeX, y: strikeY, hitOrMiss: ''
       });
     }
-
-    strikes.push({
-      p: playerNum, x: strikeX, y: strikeY, hitOrMiss: ''
-    });
 }
 
 function paintStrikes(snapshot){
