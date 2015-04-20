@@ -40,6 +40,7 @@ function init(){
   $('#board2 td').on('click', strike);
   players.on('child_added', createPlayer);
   games.on('child_added', createGame);
+  games.on('child_changed', updateGame);
   battleships.on('child_added', displayShip);
   switchGameMode('login');
   lastPaint = {x: 0, y: 0, vertOrientation: 0};
@@ -328,6 +329,9 @@ function switchGameMode(gameMode){
       displayActivePlayer();
       $('#board1').hide();
       $('#board2').show();
+      strikes = games.child(myGameKey).child('strikes');
+      strikes.on('child_added', paintStrikes);
+      strikes.on('child_changed', paintStrikes);
   }
 }
 
@@ -336,7 +340,8 @@ function clearBoards(){
     for(var j = 0; i < 10; i++){
       for(var k = 0; j < 10; j++){
         var $loc = $('#board' + i + ' td[data-x="' + j + '"][data-y="' + k + '"]');
-        $loc.removeClass('ship shiprotate');
+        console.log($loc);
+        $loc.removeClass('ship shiprotate hit miss');
         $loc.find('img').remove();
       }
     }
@@ -362,17 +367,31 @@ function displayActivePlayer(){
 }
 
 function strike(){
-  console.log($(this));
-  var strikeX = $(this).data('x');
-  var strikeY = $(this).data('y');
+  var turn = myGame.turn;
 
-  strikes = games.child(myGameKey).child('strikes');
+  if(turn === playerNum){
+    console.log(turn);
 
-  strikes.on('child_added', paintStrikes);
+    console.log($(this));
+    var strikeX = $(this).data('x');
+    var strikeY = $(this).data('y');
 
-  strikes.push({
-    p: playerNum, x: strikeX, y: strikeY, hitOrMiss: ''
-  });
+    if(turn === 'p1'){
+      games.child(myGameKey).update({
+        turn: 'p2'
+      });
+    } else {
+      games.child(myGameKey).update({
+        turn: 'p1'
+      });
+    }
+
+    strikes.push({
+      p: playerNum, x: strikeX, y: strikeY, hitOrMiss: ''
+    });
+
+
+  }
 }
 
 function paintStrikes(snapshot){
@@ -386,12 +405,31 @@ function paintStrikes(snapshot){
   if(player === playerNum){
     var board = 2;
     var $loc = $('#board' + board + ' td[data-x="' + strike.x + '"][data-y="' + strike.y + '"]');
-    $loc.addClass('miss');
+    $loc.addClass(strike.hitOrMiss);
+    $('#board2').show();
+    $('#board1').hide();
   }
   else{
     var board = 1;
     var $loc = $('#board' + board + ' td[data-x="' + strike.x + '"][data-y="' + strike.y + '"]');
-    $loc.addClass('miss');
-
+    if($loc.hasClass('ship')){
+      strikes.child(strikeKey).update({
+        hitOrMiss: 'hit'
+      });
+      $loc.addClass(strike.hitOrMiss);
+    } else {
+      strikes.child(strikeKey).update({
+        hitOrMiss: 'miss'
+      });
+      $loc.addClass(strike.hitOrMiss);
+    }
+    $('#board1').show();
+    $('#board2').hide();
   }
+}
+
+function updateGame(snapshot){
+  myGame = snapshot.val();
+  displayActivePlayer();
+
 }
