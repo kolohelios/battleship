@@ -2,7 +2,7 @@
 /* global Firebase */
 
 var root, players, battleships, games, strikes; // Firebase & children
-var myKey, myPlayer, myGame, myGameKey, playerNum; // Firebase objects and keys
+var myUid, myKey, myPlayer, myGame, myGameKey, playerNum; // Firebase objects and keys
 var lastPaint, rotateCounter, vertOrientation, shipType, x, y; // general globals
 var $sound;
 
@@ -100,27 +100,23 @@ function logoutUser(){
 function newPlayer(){
   var handle = $('#handle').val();
   var avatar= $('#avatar').val();
-  var uid = root.getAuth().uid;
+  myUid = root.getAuth().uid;
   players.push({
     handle: handle,
     avatar: avatar,
     activeGame: '',
-    uid: uid
+    uid: myUid
   });
 }
 
 function createPlayer(snapshot){
   var player = snapshot.val();
 
-  console.log('player uid: ', player.uid);
-  console.log('root getauth: ', root.getAuth().uid);
-
   if(root.getAuth().uid === player.uid){
     myPlayer = snapshot.val();
     myKey = snapshot.key();
     var handle = myPlayer.handle;
     var uid = myPlayer.uid;
-    var myUid = root.getAuth().uid;
     switchGameMode('createplayer');
   }
 }
@@ -230,8 +226,6 @@ function getShipCoords(shipType, checkX, checkY){
 function displayShip(snapshot){
   var ship = snapshot.val();
 
-  console.log('ship uid: ', ship.uid, 'myplayer uid: ', myPlayer.uid);
-
   if(ship.uid === myPlayer.uid){
     addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
     $('#ship-type option[value="' + ship.shipType + '"]').remove();
@@ -245,7 +239,6 @@ function displayShip(snapshot){
       p2points: 0,
       turn: 'p1'
     });
-
   }
   if($('#ship-type').find('option').length < 1){
     switchGameMode('startgame');
@@ -277,6 +270,8 @@ function createGame(snapshot){
         switchGameMode('startgame');
       }
     }
+
+    displayActivePlayer();
 }
 
 function isShipPresent(x, y, board){
@@ -298,6 +293,9 @@ function switchGameMode(gameMode){
   switch (gameMode){
     case 'login':
       $('#message').text('Ahoy, matey! Ya best be gettin\' to loggin\' if ya wanna play deh game!');
+      $('#board1').hide();
+      $('#board2').hide();
+      $('#players').hide();
       break;
     case 'loggedin':
       $('#user').hide();
@@ -325,14 +323,13 @@ function switchGameMode(gameMode){
       $('#message').text('Click a location to place your ship, click again to rotate.');
       break;
     case 'startgame':
+      $('#players').show();
       $('#message').text('Waiting for another pirate to scrum with!');
       $('#board1 td').off('click', tempPosition);
       $('#shipcreation').hide();
-      $('#p1').text(myGame.p1);
+      $('#p1').text(myPlayer.handle);
       $('#p2').text(myGame.p2);
       displayActivePlayer();
-      $('#board1').hide();
-      $('#board2').show();
       strikes = games.child(myGameKey).child('strikes');
       strikes.on('child_added', paintStrikes);
       strikes.on('child_changed', paintStrikes);
@@ -343,10 +340,9 @@ function switchGameMode(gameMode){
 
 function clearBoards(){
   for(var i = 1; i <= 2; i++){
-    for(var j = 0; i < 10; i++){
-      for(var k = 0; j < 10; j++){
+    for(var j = 0; j < 10; j++){
+      for(var k = 0; k < 10; k++){
         var $loc = $('#board' + i + ' td[data-x="' + j + '"][data-y="' + k + '"]');
-        console.log($loc);
         $loc.removeClass('ship shiprotate hit miss');
         $loc.find('img').remove();
       }
@@ -361,28 +357,42 @@ function displayActivePlayer(){
   else{
     playerNum = 'p2';
   }
+  console.log('player num:', playerNum, 'whose turn:', myGame.turn);
 
-  if(myGame.turn === 'p1'){
+  if(myGame.turn === 'p1' && playerNum === 'p1'){
     $('#p1').addClass('active');
     $('#p2').removeClass('active');
-  }
-  else{
+    $('#message').text('Yar turn.');
+    $('#board2').show();
+    $('#board1').hide();
+  } else if(myGame.turn === 'p2' && playerNum === 'p2'){
     $('#p2').addClass('active');
     $('#p1').removeClass('active');
+    $('#message').text('Yar turn.');
+    $('#board2').show();
+    $('#board1').hide();
+  } else if((myGame.turn === 'p1' && playerNum === 'p2') || (myGame.turn === 'p2' && playerNum === 'p1')){
+    $('#message').text('The guppy\'s turn.');
+    $('#board1').show();
+    $('#board2').hide();
+    if(myGame.turn === 'p1'){
+      $('#p1').addClass('active');
+      $('#p2').removeClass('active');
+    } else{
+      $('#p1').removeClass('active');
+      $('#p2').addClass('active');
+    }
   }
 }
 
 function strike(){
-  var turn = myGame.turn;
-
-  if(turn === playerNum){
-    console.log(turn);
-
     console.log($(this));
     var strikeX = $(this).data('x');
     var strikeY = $(this).data('y');
 
-    if(turn === 'p1'){
+    playSound(cannonSnd);
+
+    if(myGame.turn === 'p1'){
       games.child(myGameKey).update({
         turn: 'p2'
       });
@@ -392,14 +402,9 @@ function strike(){
       });
     }
 
-    playSound(cannonSnd);
-
     strikes.push({
       p: playerNum, x: strikeX, y: strikeY, hitOrMiss: ''
     });
-
-
-  }
 }
 
 function paintStrikes(snapshot){
@@ -414,8 +419,6 @@ function paintStrikes(snapshot){
     var board = 2;
     var $loc = $('#board' + board + ' td[data-x="' + strike.x + '"][data-y="' + strike.y + '"]');
     $loc.addClass(strike.hitOrMiss);
-    $('#board2').show();
-    $('#board1').hide();
   }
   else{
     var board = 1;
@@ -431,15 +434,12 @@ function paintStrikes(snapshot){
       });
       $loc.addClass(strike.hitOrMiss);
     }
-    $('#board1').show();
-    $('#board2').hide();
   }
 }
 
 function updateGame(snapshot){
   myGame = snapshot.val();
   displayActivePlayer();
-
 }
 
 function playSound(sound){
