@@ -111,27 +111,26 @@ function newPlayer(){
 }
 
 function createPlayer(snapshot){
-  var player = snapshot.val();
-
-  if(root.getAuth().uid === player.uid){
-    myPlayer = snapshot.val();
-    myKey = snapshot.key();
-    var handle = myPlayer.handle;
-    var uid = myPlayer.uid;
-    switchGameMode('createplayer');
+  if(snapshot !== undefined && root.getAuth() !== null){
+    var player = snapshot.val();
+    if(root.getAuth().uid === player.uid){
+      myPlayer = snapshot.val();
+      myKey = snapshot.key();
+      var handle = myPlayer.handle;
+      var uid = myPlayer.uid;
+      switchGameMode('createplayer');
+    }
   }
 }
 
 function placeBattleship(){
   switchGameMode('createboard');
-  console.log(shipType);
   $('#board1 td').on('click', tempPosition);
 
 }
 
 function tempPosition(){
   shipType = $('#ship-type').val();
-  console.log('running tempposition, rotateCounter:', rotateCounter);
 
   x = $(this).data('x');
   y = $(this).data('y');
@@ -225,13 +224,23 @@ function getShipCoords(shipType, checkX, checkY){
 }
 
 function displayShip(snapshot){
-  var ship = snapshot.val();
+  if(snapshot !== undefined && myPlayer !== undefined){
+    var ship = snapshot.val();
+    if(ship.uid === myPlayer.uid){
+      addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
+      $('#ship-type option[value="' + ship.shipType + '"]').remove();
+    }
 
-  if(ship.uid === myPlayer.uid){
-    addOrRemoveBattleship('add', ship.shipType, ship.x, ship.y, ship.vertOrientation, 1);
-    $('#ship-type option[value="' + ship.shipType + '"]').remove();
+    if($('#ship-type').find('option').length < 1){
+      games.once('child_added', createGame);
+      //createGame();
+    }
   }
-  if((myGameKey === undefined) && ($('#ship-type').find('option').length < 1)){
+}
+
+function createGame(snapshot){
+
+  if(snapshot === undefined){
     games.push({
       p1: myPlayer.uid,
       p1handle: myPlayer.handle,
@@ -242,40 +251,33 @@ function displayShip(snapshot){
       p2points: 0,
       turn: 'p1'
     });
-  }
-  if($('#ship-type').find('option').length < 1){
-    switchGameMode('startgame');
-  }
-}
-
-function createGame(snapshot){
-  var game = snapshot.val();
-
-  if(game.p1 === myPlayer.uid || game.p2 === myPlayer.uid){
-    myGameKey = snapshot.key();
-    myGame = snapshot.val();
-    players.child(myKey).update({
-      activeGame: myGameKey
-    });
-    if($('#ship-type').find('option').length < 1){
-      switchGameMode('startgame');
-    }
-  } else if(game.p2 === '' && game.p1 !== myPlayer.uid && myPlayer.activeGame === ''){
+  } else{
+    var game = snapshot.val();
+    if(game.p1 === myPlayer.uid || game.p2 === myPlayer.uid){
       myGameKey = snapshot.key();
       myGame = snapshot.val();
       players.child(myKey).update({
         activeGame: myGameKey
       });
-      games.child(myGameKey).update({
-        p2: myPlayer.uid,
-        p2handle: myPlayer.handle
-      });
       if($('#ship-type').find('option').length < 1){
         switchGameMode('startgame');
       }
+    } else if(game.p2 === '' && game.p1 !== myPlayer.uid && myPlayer.activeGame === ''){
+        myGameKey = snapshot.key();
+        myGame = snapshot.val();
+        players.child(myKey).update({
+          activeGame: myGameKey
+        });
+        games.child(myGameKey).update({
+          p2: myPlayer.uid,
+          p2handle: myPlayer.handle
+        });
+        if($('#ship-type').find('option').length < 1){
+          switchGameMode('startgame');
+        }
+      displayActivePlayer();
     }
-
-    displayActivePlayer();
+  }
 }
 
 function isShipPresent(x, y, board){
@@ -391,7 +393,6 @@ function displayActivePlayer(){
 
 function strike(){
     if(myGame.turn ===  playerNum){
-      console.log($(this));
       var strikeX = $(this).data('x');
       var strikeY = $(this).data('y');
 
